@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>พาสปอร์ตเข็มทิศอนาคต</title>
+<style>
+  :root {
+    --bg: #0F172A;
+    --panel: #1E293B;
+    --panel-light: #334155;
+    --text: #F8FAFC;
+    --muted: #94A3B8;
+    --gold: #FFB703;
+    --blue: #38BDF8;
+    --error: #FB7185;
+    --dark-text: #0F172A;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  main { max-width: 560px; margin: 0 auto; padding: 20px 16px 40px; }
+  header { margin-bottom: 18px; }
+  header h1 { font-size: 24px; line-height: 1.35; margin: 0; color: var(--gold); }
+  header p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+  .card { background: var(--panel); border-radius: 14px; padding: 20px 18px; margin-bottom: 16px; }
+  .card h2 { font-size: 20px; margin: 0 0 12px; }
+  .code {
+    font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 19px;
+    line-height: 1.55;
+    letter-spacing: 0.04em;
+    color: var(--gold);
+    background: #0B1220;
+    border-radius: 10px;
+    padding: 12px 14px;
+    word-break: normal;
+    overflow-wrap: normal;
+    user-select: all;
+    -webkit-user-select: all;
+  }
+  .summary { color: var(--blue); font-weight: 600; margin: 12px 0 14px; }
+  .buttons { display: flex; flex-direction: column; gap: 10px; }
+  button, .button {
+    display: block; width: 100%; min-height: 52px; border: 0; border-radius: 12px;
+    font: inherit; font-weight: 700; font-size: 18px; cursor: pointer; text-align: center; text-decoration: none;
+    padding: 12px 16px;
+  }
+  .primary { background: var(--gold); color: var(--dark-text); }
+  .secondary { background: var(--panel-light); color: var(--text); }
+  button:focus-visible, .button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  .steps { margin: 0; color: var(--text); }
+  .note { color: var(--muted); font-size: 15px; margin: 10px 0 0; }
+  .message { color: var(--error); font-weight: 600; margin: 0; }
+  .hidden { display: none !important; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { text-align: left; padding: 6px 3px; border-bottom: 1px solid var(--panel-light); vertical-align: top; overflow-wrap: anywhere; }
+  td:first-child, td:last-child, th:first-child { white-space: nowrap; }
+  .pass { color: #4ADE80; font-weight: 700; }
+  .fail { color: var(--error); font-weight: 700; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>พาสปอร์ตเข็มทิศอนาคต</h1>
+    <p>Future Compass</p>
+  </header>
+
+  <section id="valid" class="card hidden" aria-live="polite">
+    <h2>รหัสพาสปอร์ตของคุณ</h2>
+    <div id="code" class="code"></div>
+    <p id="summary" class="summary"></p>
+    <div class="buttons">
+      <button id="copy" class="primary" type="button">คัดลอกรหัส</button>
+      <a id="openGame" class="button secondary hidden" rel="noreferrer">เปิดเกม</a>
+    </div>
+  </section>
+
+  <section id="howto" class="card hidden">
+    <p class="steps">วิธีเล่นต่อ: 1) เปิดเกมเข็มทิศอนาคต 2) กดปุ่ม "มีรหัสพาสปอร์ตแล้ว" 3) วางรหัสนี้ แล้วกรอกชื่อเล่น</p>
+    <p class="note">เพิ่มหน้านี้ในบุ๊กมาร์กหรือถ่ายภาพหน้าจอไว้ เพื่อใช้รหัสภายหลัง</p>
+  </section>
+
+  <section id="invalid" class="card hidden" aria-live="polite">
+    <p class="message">ลิงก์นี้ไม่มีรหัสพาสปอร์ตที่ถูกต้อง กรุณาสแกน QR Code จากเกมอีกครั้ง</p>
+  </section>
+
+  <section id="newer" class="card hidden" aria-live="polite">
+    <p class="message">รหัสนี้มาจากเกมเวอร์ชันใหม่กว่าหน้านี้ กรุณาเปิดเกมแล้ววางรหัสโดยตรง</p>
+  </section>
+
+  <section id="selftest" class="card hidden">
+    <h2>Self-test (FC2)</h2>
+    <p id="selftestSummary" class="summary"></p>
+    <table>
+      <thead><tr><th>ID</th><th>ผลที่ต้องได้</th><th>ผลที่ได้</th><th></th></tr></thead>
+      <tbody id="selftestRows"></tbody>
+    </table>
+  </section>
+
+  <p class="note">หน้านี้ไม่ส่งรหัสของคุณไปที่ใดและไม่เก็บข้อมูลใดๆ</p>
+</main>
+
+<script>
+"use strict";
+
+// ลิงก์หน้าเกม (เช่น หน้า Itch.io) — ค่าว่าง = ซ่อนปุ่ม "เปิดเกม" (Director ตั้งค่าตอนติดตั้ง — ดู README.md)
+var GAME_URL = "";
+
+// FC2-CODEC-BEGIN — JS port ของ Task 003 ข้อ 3.2.5–3.2.6 (ตัวอ้างอิง: tools/passport_fc2_reference.py) ห้ามแก้ตารางหรือลำดับการตรวจ
+var FC2 = (function () {
+  var MISSIONS = ["MISSION_01_CRISIS_CAMP", "MISSION_02_SILENT_WITNESS", "MISSION_03_ECO_CITY", "MISSION_04_BOT_LAB"];
+  var AXES = ["LOGIC", "SPATIAL", "EMPATHY", "RESOURCE", "OBSERVE", "EXECUTE"];
+  var STAGES = ["JUNIOR_HIGH", "SENIOR_HIGH_VOC"];
+  var ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+  var MAX_VALUE = 200;
+
+  var CRC_TABLE = (function () {
+    var table = [];
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      table.push(c >>> 0);
+    }
+    return table;
+  })();
+
+  function crc32(bytes) {
+    var crc = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) crc = CRC_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  function valueOf(ch) {
+    if (ch === "O") return 0;
+    if (ch === "I" || ch === "L") return 1;
+    return ALPHABET.indexOf(ch);
+  }
+
+  function encodeBase32(bytes) {
+    var out = "", buffer = 0, bits = 0;
+    for (var i = 0; i < bytes.length; i++) {
+      buffer = (buffer << 8) | bytes[i];
+      bits += 8;
+      while (bits >= 5) {
+        bits -= 5;
+        out += ALPHABET[(buffer >> bits) & 31];
+      }
+      buffer &= (1 << bits) - 1;
+    }
+    if (bits > 0) out += ALPHABET[(buffer << (5 - bits)) & 31];
+    return out;
+  }
+
+  function group(body) {
+    var parts = [];
+    for (var i = 0; i < body.length; i += 4) parts.push(body.substr(i, 4));
+    return "FC2-" + parts.join("-");
+  }
+
+  /** คืน { error, data } — error: None / Empty / BadFormat / UnsupportedVersion / ChecksumMismatch / CorruptPayload */
+  function decode(code) {
+    if (code === null || code === undefined) return { error: "Empty" };
+    var s = String(code).replace(/\s+/g, "");
+    if (s.length === 0) return { error: "Empty" };
+    s = s.toUpperCase();
+    if (s.indexOf(".") >= 0) return { error: "BadFormat" }; // รหัส FC1 — หน้านี้รองรับเฉพาะ FC2
+    if (s.length < 3 || s[0] !== "F" || s[1] !== "C" || !/[0-9]/.test(s[2])) return { error: "BadFormat" };
+    if (s[2] === "1") return { error: "BadFormat" };
+    if (s[2] !== "2") return { error: "UnsupportedVersion" };
+
+    var body = s.substring(3).replace(/-/g, "");
+    if (body.length === 0) return { error: "BadFormat" };
+    var values = [];
+    for (var i = 0; i < body.length; i++) {
+      var v = valueOf(body[i]);
+      if (v < 0) return { error: "BadFormat" };
+      values.push(v);
+    }
+
+    var totalBits = values.length * 5;
+    var byteCount = Math.floor(totalBits / 8);
+    var pad = totalBits - byteCount * 8;
+    if (pad >= 5 || byteCount < 6) return { error: "BadFormat" };
+
+    var bytes = [], buffer = 0, bits = 0;
+    for (var j = 0; j < values.length; j++) {
+      buffer = (buffer << 5) | values[j];
+      bits += 5;
+      if (bits >= 8) {
+        bits -= 8;
+        if (bytes.length < byteCount) bytes.push((buffer >> bits) & 0xFF);
+        buffer &= (1 << bits) - 1;
+      }
+    }
+    if (buffer !== 0) return { error: "BadFormat" }; // บิตเติมท้ายต้องเป็น 0
+
+    var payload = bytes.slice(0, byteCount - 4);
+    var expected = ((bytes[byteCount - 4] << 24) | (bytes[byteCount - 3] << 16) | (bytes[byteCount - 2] << 8) | bytes[byteCount - 1]) >>> 0;
+    if (crc32(payload) !== expected) return { error: "ChecksumMismatch" };
+
+    var parsed = parse(payload);
+    if (parsed.error !== "None") return parsed;
+    parsed.canonical = group(encodeBase32(bytes));
+    return parsed;
+  }
+
+  function parse(b) {
+    var flags = b[0], mask = b[1];
+    if ((flags & 0xFE) || (mask & 0xF0)) return { error: "UnsupportedVersion" };
+    var stage = STAGES[flags & 1];
+    var pos = 2, records = {};
+    for (var i = 0; i < MISSIONS.length; i++) {
+      if (!(mask & (1 << i))) continue;
+      if (pos + 2 > b.length) return { error: "CorruptPayload" };
+      var axisMask = b[pos], play = b[pos + 1];
+      pos += 2;
+      if (axisMask & 0xC0) return { error: "UnsupportedVersion" };
+      if (play === 0) return { error: "CorruptPayload" };
+      var axes = [];
+      for (var j = 0; j < AXES.length; j++) if (axisMask & (1 << j)) axes.push(AXES[j]);
+      var n = axes.length, need = n * (play >= 2 ? 2 : 1);
+      if (pos + need > b.length) return { error: "CorruptPayload" };
+      var firsts = b.slice(pos, pos + n);
+      pos += n;
+      var bests = firsts;
+      if (play >= 2) { bests = b.slice(pos, pos + n); pos += n; }
+      for (var k = 0; k < n; k++) {
+        if (firsts[k] > MAX_VALUE || bests[k] > MAX_VALUE || bests[k] < firsts[k]) return { error: "CorruptPayload" };
+      }
+      records[MISSIONS[i]] = { playCount: play, axes: axes };
+    }
+    if (pos !== b.length) return { error: "CorruptPayload" };
+    return { error: "None", data: { educationStage: stage, missionRecords: records } };
+  }
+
+  // ค่าทดสอบเดียวกับใบสั่งงาน Task 003 ข้อ 3.2.9
+  var V03 = "FC2-000K-T0BX-C27P-X8HV-W042-M";
+  var CASES = [
+    { id: "V01", code: "FC2-0004-3P8J-ZW", expect: "None", stage: "JUNIOR_HIGH", missions: 0 },
+    { id: "V02", code: "FC2-0405-HGH3-QR", expect: "None", stage: "SENIOR_HIGH_VOC", missions: 0 },
+    { id: "V03", code: V03, expect: "None", stage: "JUNIOR_HIGH", missions: 1 },
+    { id: "V04", code: "FC2-040K-T0TG-D62K-S5KM-D6HN-ND39-NZ7N-M", expect: "None", stage: "SENIOR_HIGH_VOC", missions: 1 },
+    { id: "V05", code: "FC2-000K-E0A3-000W-HJ04-6R1J-6", expect: "None", stage: "JUNIOR_HIGH", missions: 1 },
+    { id: "V06", code: "FC2-0420-40JV-HJDX-50XQ", expect: "None", stage: "SENIOR_HIGH_VOC", missions: 1 },
+    { id: "V07", code: "FC2-047K-Y0K4-CHJ6-8S34-S34C-HJ68-S0ZG-A000-0000-000S-34CH-J68S-7ZZW-FHY7-RZ3W-FJ68-S34C-HJ1Z-ZW10-40G2-0810-60R3-0C1G-7RRS-24DG", expect: "None", stage: "SENIOR_HIGH_VOC", missions: 4 },
+    { id: "N01", code: "FC2-000K-00BX-C27P-X8HV-W042-M", expect: "ChecksumMismatch" },
+    { id: "N02", code: "FC2-000K-T0BX-C27P-X8HV-W042-", expect: "BadFormat" },
+    { id: "N03", code: "FC2-U000-0000-00", expect: "BadFormat" },
+    { id: "N04", code: "FC3-0000-0000-00", expect: "UnsupportedVersion" },
+    { id: "N05", code: "FC2-", expect: "BadFormat" },
+    { id: "N06", code: "XYZ-1234", expect: "BadFormat" },
+    { id: "N07", code: "   \n ", expect: "Empty" },
+    { id: "N08", code: "FC2-0807-7VVG-FM", expect: "UnsupportedVersion" },
+    { id: "N09", code: "FC2-0085-RVG2-KC", expect: "UnsupportedVersion" },
+    { id: "N10", code: "FC2-000G-20K4-CFHB-19AS", expect: "CorruptPayload" },
+    { id: "N11", code: "FC2-000G-2034-6P1N-Y3G", expect: "CorruptPayload" },
+    { id: "N12", code: "FC2-000G-20E9-GKZV-26G", expect: "CorruptPayload" },
+    { id: "N13", code: "FC2-000K-DQH2-D4", expect: "CorruptPayload" },
+    { id: "N14", code: "FC2-0000-1ZT1-V490", expect: "CorruptPayload" },
+    { id: "N15", code: "FC2-000M-00D7-Z35B-G", expect: "UnsupportedVersion" },
+    { id: "N16", code: "FC2-0004-3P8J-ZX", expect: "BadFormat" },
+    { id: "N17", code: "FC1-0004-3P8J-ZW", expect: "BadFormat" },
+    { id: "E01", code: "FC2000KT0BXC27PX8HVW042M", expect: "None", same: V03 },
+    { id: "E02", code: "fc2-000k-t0bx-c27p-x8hv-w042-m", expect: "None", same: V03 },
+    { id: "E03", code: " FC2 - 000K -\n T0BX - C27P - X8HV - W042 - M  ", expect: "None", same: V03 },
+    { id: "E04", code: "FC2-OOOK-TOBX-C27P-X8HV-WO42-M", expect: "None", same: V03 }
+  ];
+
+  function runSelfTest() {
+    var rows = [];
+    for (var i = 0; i < CASES.length; i++) {
+      var c = CASES[i], r = decode(c.code), ok = r.error === c.expect, got = r.error;
+      if (ok && r.error === "None") {
+        var count = Object.keys(r.data.missionRecords).length;
+        got += " · " + r.data.educationStage + " · " + count;
+        if (c.stage !== undefined) ok = r.data.educationStage === c.stage && count === c.missions && r.canonical === c.code;
+        if (c.same !== undefined) ok = r.canonical === c.same;
+      }
+      rows.push({ id: c.id, expect: c.expect + (c.stage ? " · " + c.stage + " · " + c.missions : "") + (c.same ? " = V03" : ""), got: got, pass: ok });
+    }
+    return rows;
+  }
+
+  return { decode: decode, runSelfTest: runSelfTest, CASES: CASES };
+})();
+// FC2-CODEC-END
+
+(function () {
+  function show(id) { document.getElementById(id).classList.remove("hidden"); }
+
+  function readCode() {
+    var hash = (window.location.hash || "").replace(/^#/, "");
+    if (hash === "selftest") return { selftest: true };
+    var fromHash = null;
+    hash.split("&").forEach(function (part) {
+      var kv = part.split("=");
+      if (kv[0] === "p" && kv.length > 1) fromHash = decodeURIComponent(kv.slice(1).join("="));
+    });
+    if (fromHash) return { code: fromHash };
+    var query = (window.location.search || "").replace(/^\?/, "");
+    var fromQuery = null;
+    query.split("&").forEach(function (part) {
+      var kv = part.split("=");
+      if (kv[0] === "p" && kv.length > 1) fromQuery = decodeURIComponent(kv.slice(1).join("=").replace(/\+/g, " "));
+    });
+    return { code: fromQuery };
+  }
+
+  function copyCode(text, button) {
+    function done() { button.textContent = "คัดลอกแล้ว"; }
+    function fallback() {
+      try {
+        var element = document.getElementById("code");
+        var range = document.createRange();
+        range.selectNodeContents(element);
+        var selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        if (document.execCommand && document.execCommand("copy")) done();
+      } catch (e) { /* ผู้ใช้คัดลอกเองได้ — ข้อความถูกเลือกไว้แล้ว */ }
+    }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, fallback);
+        return;
+      }
+    } catch (e) { /* ใช้ fallback */ }
+    fallback();
+  }
+
+  function renderSelfTest() {
+    var rows = FC2.runSelfTest(), body = document.getElementById("selftestRows"), passed = 0;
+    rows.forEach(function (row) {
+      if (row.pass) passed++;
+      var tr = document.createElement("tr");
+      [row.id, row.expect, row.got].forEach(function (text) {
+        var td = document.createElement("td");
+        td.textContent = text;
+        tr.appendChild(td);
+      });
+      var result = document.createElement("td");
+      result.textContent = row.pass ? "PASS" : "FAIL";
+      result.className = row.pass ? "pass" : "fail";
+      tr.appendChild(result);
+      body.appendChild(tr);
+    });
+    document.getElementById("selftestSummary").textContent = passed + " / " + rows.length + (passed === rows.length ? " ALL PASS" : " FAILED");
+    show("selftest");
+  }
+
+  var input = readCode();
+  if (input.selftest) { renderSelfTest(); return; }
+
+  var result = FC2.decode(input.code);
+  if (result.error === "UnsupportedVersion") { show("newer"); return; }
+  if (result.error !== "None") { show("invalid"); return; }
+
+  var stageText = result.data.educationStage === "JUNIOR_HIGH" ? "ม.ต้น" : "ม.ปลาย / ปวช.";
+  var missions = Object.keys(result.data.missionRecords).length;
+  // ตัดบรรทัดได้ที่ "-" เท่านั้น (ไม่ตัดกลางกลุ่ม 4 อักษร)
+  var codeElement = document.getElementById("code");
+  result.canonical.split("-").forEach(function (part, index, parts) {
+    codeElement.appendChild(document.createTextNode(part + (index < parts.length - 1 ? "-" : "")));
+    if (index < parts.length - 1) codeElement.appendChild(document.createElement("wbr"));
+  });
+  document.getElementById("summary").textContent = "นักเรียน " + stageText + " · เล่นแล้ว " + missions + " ภารกิจ";
+  var copyButton = document.getElementById("copy");
+  copyButton.addEventListener("click", function () { copyCode(result.canonical, copyButton); });
+  if (GAME_URL) {
+    var link = document.getElementById("openGame");
+    link.href = GAME_URL;
+    link.classList.remove("hidden");
+  }
+  show("valid");
+  show("howto");
+})();
+</script>
+</body>
+</html>
