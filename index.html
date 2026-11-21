@@ -108,11 +108,50 @@
     </table>
   </section>
 
+  <section id="redirect" class="card hidden" aria-live="polite">
+    <p class="message">หน้าพาสปอร์ตย้ายไปอยู่ในเว็บเกมแล้ว กำลังเปิดหน้าใหม่…</p>
+    <div class="buttons"><a id="redirectLink" class="button primary" rel="noreferrer">เปิดหน้าพาสปอร์ต</a></div>
+  </section>
+
   <p class="note">หน้านี้ไม่ส่งรหัสของคุณไปที่ใดและไม่เก็บข้อมูลใดๆ</p>
 </main>
 
 <script>
 "use strict";
+
+// Task W04 หมวด J (WDR-054 D5, WDR-057 D9): ที่อยู่เว็บเกม เช่น "https://futurecompass.kookkaistudio.workers.dev" (ไม่มี / ท้าย)
+// ค่าว่าง = หน้าเดิมทุกอย่าง; ไม่ว่าง = ส่งต่อไป APP_ORIGIN + "/p#<รหัส>" ทันที (รหัสอยู่หลัง # เสมอ — ไม่ถูกส่งไปเซิร์ฟเวอร์) — ดู README.md
+var APP_ORIGIN = "https://futurecompass.kookkaistudio.workers.dev";
+var REDIRECT_TARGET = null;
+
+(function () {
+  if (!APP_ORIGIN) return;
+  var hash = (window.location.hash || "").replace(/^#/, "");
+  if (hash === "selftest") return;
+  function decode(v) {
+    try { return decodeURIComponent(v); } catch (e) { return v; }
+  }
+  function param(text, plusIsSpace) {
+    var found = null;
+    text.split("&").forEach(function (part) {
+      var kv = part.split("=");
+      if (kv[0] === "p" && kv.length > 1) {
+        var v = kv.slice(1).join("=");
+        found = decode(plusIsSpace ? v.replace(/\+/g, " ") : v);
+      }
+    });
+    return found;
+  }
+  var code = param(hash, false);
+  if (code === null && hash !== "" && hash.indexOf("=") < 0) code = decode(hash);
+  if (code === null) code = param((window.location.search || "").replace(/^\?/, ""), true);
+  code = code ? code.trim() : "";
+  REDIRECT_TARGET = APP_ORIGIN.replace(/\/+$/, "") + "/p" + (code ? "#" + encodeURIComponent(code) : "");
+  var link = document.getElementById("redirectLink");
+  link.href = REDIRECT_TARGET;
+  document.getElementById("redirect").classList.remove("hidden");
+  window.location.replace(REDIRECT_TARGET);
+})();
 
 // ลิงก์หน้าเกม (เช่น หน้า Itch.io) — ค่าว่าง = ซ่อนปุ่ม "เปิดเกม" (Director ตั้งค่าตอนติดตั้ง — ดู README.md)
 var GAME_URL = "";
@@ -359,6 +398,7 @@ var FC2 = (function () {
     show("selftest");
   }
 
+  if (REDIRECT_TARGET) return;
   var input = readCode();
   if (input.selftest) { renderSelfTest(); return; }
 
